@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Derivadas AI - Calculadora de Derivadas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.7.0/math.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --primary-blue: #1a365d;
+            --secondary-blue: #4299e1;
+            --light-blue: #ebf8ff;
+            --orange: #ed8936;
+            --dark-orange: #dd6b20;
+            --green: #48bb78;
+            --yellow: #ecc94b;
+            --purple: #9f7aea;
+            --red: #f56565;
+            --gray: #e2e8f0;
+            --dark-gray: #4a5568;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: white;
+            color: var(--primary-blue);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--gray);
+        }
+
+        h1 {
+            color: var(--primary-blue);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--dark-gray);
+            font-size: 1.1rem;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        @media (min-width: 768px) {
+            .app-container {
+                flex-direction: row;
+            }
+        }
+
+        .input-section, .output-section {
+            flex: 1;
+        }
+
+        .input-section {
+            background-color: var(--light-blue);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .output-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--gray);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--gray);
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--secondary-blue);
+        }
+
+        .btn {
+            background-color: var(--orange);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            background-color: var(--dark-orange);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-blue);
+        }
+
+        .btn-secondary:hover {
+            background-color: #3182ce;
+        }
+
+        .btn-tertiary {
+            background-color: var(--green);
+        }
+
+        .btn-tertiary:hover {
+            background-color: #38a169;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .button-group .btn {
+            flex: 1;
+        }
+
+        .functions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .function-card {
+            padding: 15px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .function-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .power {
+            background-color: var(--secondary-blue);
+        }
+
+        .exponential {
+            background-color: var(--green);
+        }
+
+        .trigonometric {
+            background-color: var(--yellow);
+            color: var(--primary-blue);
+        }
+
+        .logarithmic {
+            background-color: var(--purple);
+        }
+
+        .other {
+            background-color: var(--red);
+        }
+
+        .result-container {
+            min-height: 200px;
+            padding: 20px;
+            background-color: var(--light-blue);
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--orange);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            color: var(--red);
+            background-color: #fff5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid var(--red);
+            display: none;
+        }
+
+        .math-expression, .math-result {
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+
+        .note {
+            font-size: 14px;
+            color: var(--dark-gray);
+            margin-top: 15px;
+        }
+
+        a {
+            color: var(--secondary-blue);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 2px solid var(--gray);
+            color: var(--dark-gray);
+        }
+
+        /* Estilos para accesibilidad */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        [aria-hidden="true"] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Derivadas AI</h1>
+            <p class="subtitle">Calculadora inteligente de derivadas para estudiantes</p>
+        </header>
+
+        <main class="app-container">
+            <section class="input-section" aria-labelledby="input-section-heading">
+                <h2 id="input-section-heading" class="sr-only">Entrada de datos</h2>
+                
+                <div class="form-group">
+                    <label for="math-expression">Ingresa tu expresión matemática (usa 'x' como variable):</label>
+                    <input type="text" id="math-expression" class="input-field" 
+                           placeholder="Ej: x^2 + 3x - 5, sin(x), e^(2x), ln(x)" aria-required="true">
+                </div>
+
+                <div class="button-group">
+                    <button id="calculate-btn" class="btn">Calcular Derivada</button>
+                    <button id="clear-btn" class="btn btn-secondary">Limpiar</button>
+                </div>
+
+                <button id="pdf-btn" class="btn btn-tertiary">Generar PDF de Derivadas</button>
+
+                <div class="error-message" id="error-message" role="alert"></div>
+
+                <div class="functions-grid">
+                    <div class="function-card power" onclick="insertFunction('x^n', 'Potencia')">
+                        Potencia (x^n)
+                    </div>
+                    <div class="function-card exponential" onclick="insertFunction('e^x', 'Exponencial')">
+                        Exponencial (e^x)
+                    </div>
+                    <div class="function-card trigonometric" onclick="insertFunction('sin(x)', 'Trigonométrica')">
+                        Seno (sin(x))
+                    </div>
+                    <div class="function-card trigonometric" onclick="insertFunction('cos(x)', 'Trigonométrica')">
+                        Coseno (cos(x))
+                    </div>
+                    <div class="function-card trigonometric" onclick="insertFunction('tan(x)', 'Trigonométrica')">
+                        Tangente (tan(x))
+                    </div>
+                    <div class="function-card logarithmic" onclick="insertFunction('ln(x)', 'Logarítmica')">
+                        Logaritmo natural (ln(x))
+                    </div>
+                    <div class="function-card logarithmic" onclick="insertFunction('log10(x)', 'Logarítmica')">
+                        Logaritmo base 10 (log10(x))
+                    </div>
+                    <div class="function-card other" onclick="insertFunction('sqrt(x)', 'Raíz cuadrada')">
+                        Raíz cuadrada (√x)
+                    </div>
+                </div>
+            </section>
+
+            <section class="output-section" aria-labelledby="output-section-heading">
+                <h2 id="output-section-heading">Resultado</h2>
+                
+                <div class="loading" id="loading">
+                    <div class="spinner" aria-hidden="true"></div>
+                    <p>Calculando derivada...</p>
+                </div>
+
+                <div class="result-container" id="result-container">
+                    <p>Ingresa una expresión matemática y haz clic en "Calcular Derivada" para ver el resultado.</p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Derivadas AI - Herramienta educativa para cálculo diferencial</p>
+        </footer>
+    </div>
+
+    <script>
+        // Inicializar jsPDF
+        const { jsPDF } = window.jspdf;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const calculateBtn = document.getElementById('calculate-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const pdfBtn = document.getElementById('pdf-btn');
+            const mathExpression = document.getElementById('math-expression');
+            const resultContainer = document.getElementById('result-container');
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('error-message');
+
+            // Función para calcular derivadas usando math.js
+            function calcularDerivadaLocal(expresion) {
+                try {
+                    // Preprocesar entrada para hacerla compatible con math.js
+                    const expPreprocesada = expresion
+                        .replace(/\^/g, '^')       // Potencias
+                        .replace(/sin\(/g, 'sin(')   // Funciones trigonométricas
+                        .replace(/cos\(/g, 'cos(')
+                        .replace(/tan\(/g, 'tan(')
+                        .replace(/ln\(/g, 'log(')    // Logaritmo natural
+                        .replace(/log10\(/g, 'log10(')
+                        .replace(/sqrt\(/g, 'sqrt(');
+                    
+                    return math.derivative(expPreprocesada, 'x').toString();
+                } catch (error) {
+                    console.error("Error al derivar:", error);
+                    return null;
+                }
+            }
+
+            // Botón Calcular Derivada
+            calculateBtn.addEventListener('click', function() {
+                const expression = mathExpression.value.trim();
+                
+                if (!expression) {
+                    showError('Por favor, ingresa una expresión matemática.');
+                    return;
+                }
+                
+                loading.style.display = 'block';
+                resultContainer.innerHTML = '';
+                errorMessage.style.display = 'none';
+                
+                setTimeout(() => {
+                    try {
+                        const resultadoLocal = calcularDerivadaLocal(expression);
+                        
+                        if (resultadoLocal) {
+                            resultContainer.innerHTML = `
+                                <h3>Expresión original:</h3>
+                                <div class="math-expression">${expression}</div>
+                                <h3>Derivada:</h3>
+                                <div class="math-result">${resultadoLocal}</div>
+                                <p class="note">Para una explicación paso a paso, 
+                                <a href="https://copilot.microsoft.com/?q=Calcula+la+derivada+de+${encodeURIComponent(expression)}+Explica+paso+a+paso" target="_blank">consulta en Copilot</a>.</p>
+                            `;
+                        } else {
+                            window.open(`https://copilot.microsoft.com/?q=Calcula+la+derivada+de+${encodeURIComponent(expression)}+Explica+paso+a+paso`, '_blank');
+                            resultContainer.innerHTML = `
+                                <h3>Expresión original:</h3>
+                                <div class="math-expression">${expression}</div>
+                                <p>La derivada no pudo calcularse localmente. Se abrió Copilot en una nueva pestaña.</p>
+                            `;
+                        }
+                    } catch (error) {
+                        showError('Error al procesar la expresión. Inténtalo de nuevo.');
+                        console.error(error);
+                    } finally {
+                        loading.style.display = 'none';
+                    }
+                }, 500);
+            });
+            
+            // Botón Limpiar
+            clearBtn.addEventListener('click', function() {
+                mathExpression.value = '';
+                resultContainer.innerHTML = '<p>Ingresa una expresión matemática y haz clic en "Calcular Derivada" para ver el resultado.</p>';
+                errorMessage.style.display = 'none';
+                
+                // Mostrar notificación
+                showNotification('Área de texto limpiada', 'var(--secondary-blue)');
+            });
+            
+            // Botón Generar PDF
+            pdfBtn.addEventListener('click', function() {
+                loading.style.display = 'block';
+                
+                setTimeout(() => {
+                    try {
+                        generatePDF();
+                        loading.style.display = 'none';
+                        showNotification('PDF generado con éxito', 'var(--green)');
+                    } catch (error) {
+                        showError('Error al generar el PDF. Inténtalo de nuevo.');
+                        loading.style.display = 'none';
+                        console.error(error);
+                    }
+                }, 500);
+            });
+            
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+            }
+            
+            function showNotification(message, color) {
+                const notification = document.createElement('div');
+                notification.textContent = message;
+                notification.style.position = 'fixed';
+                notification.style.bottom = '20px';
+                notification.style.right = '20px';
+                notification.style.backgroundColor = color;
+                notification.style.color = 'white';
+                notification.style.padding = '10px 20px';
+                notification.style.borderRadius = '4px';
+                notification.style.zIndex = '1000';
+                notification.style.transition = 'opacity 0.3s';
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    setTimeout(() => document.body.removeChild(notification), 300);
+                }, 2000);
+            }
+            
+            function generatePDF() {
+                // Crear un nuevo documento PDF en orientación horizontal
+                const doc = new jsPDF('l', 'mm', 'a4');
+                
+                // Título del PDF
+                doc.setFontSize(20);
+                doc.setTextColor(26, 54, 93); // Azul oscuro
+                doc.text('Tabla Completa de Derivadas', doc.internal.pageSize.width / 2, 20, { align: 'center' });
+                
+                doc.setFontSize(12);
+                doc.setTextColor(74, 85, 104); // Gris oscuro
+                doc.text('Guía de referencia para cálculo diferencial', doc.internal.pageSize.width / 2, 28, { align: 'center' });
+                
+                // Encabezados de la tabla (ahora en horizontal)
+                doc.setFontSize(11);
+                doc.setTextColor(255, 255, 255); // Blanco
+                doc.setFillColor(66, 153, 225); // Azul claro
+                
+                // Ajustar posición Y inicial para evitar solapamiento
+                let y = 40;
+                
+                // Dibujar rectángulo de fondo para encabezados
+                doc.rect(10, y - 5, doc.internal.pageSize.width - 20, 10, 'F');
+                
+                // Encabezados de columnas
+                doc.text('Función', 20, y + 2);
+                doc.text('Derivada', 70, y + 2);
+                doc.text('Ejemplo', 120, y + 2);
+                doc.text('Derivada del Ejemplo', 170, y + 2);
+                doc.text('Regla/Notas', 230, y + 2);
+                
+                // Contenido de la tabla (lista completa de derivadas)
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0); // Negro
+                
+                const derivatives = [
+                    // Funciones básicas
+                    ['Constante', '0', 'f(x) = 5', 'f\'(x) = 0', 'Derivada de una constante es siempre 0'],
+                    ['Potencia (x^n)', 'n·x^(n-1)', 'f(x) = x³', 'f\'(x) = 3x²', 'Regla de la potencia'],
+                    ['Raíz cuadrada (√x)', '1/(2√x)', 'f(x) = √x', 'f\'(x) = 1/(2√x)', 'Caso especial de potencia (x^(1/2))'],
+                    
+                    // Funciones exponenciales y logarítmicas
+                    ['Exponencial (e^x)', 'e^x', 'f(x) = e^x', 'f\'(x) = e^x', 'Derivada igual a la función original'],
+                    ['Exponencial (a^x)', 'a^x·ln(a)', 'f(x) = 2^x', 'f\'(x) = 2^x·ln(2)', 'Para a > 0, a ≠ 1'],
+                    ['Logaritmo natural (ln x)', '1/x', 'f(x) = ln(x)', 'f\'(x) = 1/x', 'Para x > 0'],
+                    ['Logaritmo base a (logₐ x)', '1/(x·ln(a))', 'f(x) = log₂(x)', 'f\'(x) = 1/(x·ln(2))', 'Para a > 0, a ≠ 1, x > 0'],
+                    
+                    // Funciones trigonométricas
+                    ['Seno (sin x)', 'cos x', 'f(x) = sin(x)', 'f\'(x) = cos(x)', 'Derivada básica'],
+                    ['Coseno (cos x)', '-sin x', 'f(x) = cos(x)', 'f\'(x) = -sin(x)', 'Derivada básica'],
+                    ['Tangente (tan x)', 'sec² x', 'f(x) = tan(x)', 'f\'(x) = sec²(x)', 'sec(x) = 1/cos(x)'],
+                    ['Cotangente (cot x)', '-csc² x', 'f(x) = cot(x)', 'f\'(x) = -csc²(x)', 'csc(x) = 1/sin(x)'],
+                    ['Secante (sec x)', 'sec x · tan x', 'f(x) = sec(x)', 'f\'(x) = sec(x)tan(x)', 'Derivada compuesta'],
+                    ['Cosecante (csc x)', '-csc x · cot x', 'f(x) = csc(x)', 'f\'(x) = -csc(x)cot(x)', 'Derivada compuesta'],
+                    
+                    // Funciones trigonométricas inversas
+                    ['Arcoseno (arcsin x)', '1/√(1-x²)', 'f(x) = arcsin(x)', 'f\'(x) = 1/√(1-x²)', 'Para -1 < x < 1'],
+                    ['Arcocoseno (arccos x)', '-1/√(1-x²)', 'f(x) = arccos(x)', 'f\'(x) = -1/√(1-x²)', 'Para -1 < x < 1'],
+                    ['Arcotangente (arctan x)', '1/(1+x²)', 'f(x) = arctan(x)', 'f\'(x) = 1/(1+x²)', 'Para todo x real'],
+                    
+                    // Operaciones con funciones
+                    ['Suma de funciones', 'f\'(x) + g\'(x)', 'f(x) = x² + sin(x)', 'f\'(x) = 2x + cos(x)', 'Linealidad de la derivada'],
+                    ['Resta de funciones', 'f\'(x) - g\'(x)', 'f(x) = x³ - cos(x)', 'f\'(x) = 3x² + sin(x)', 'Linealidad de la derivada'],
+                    ['Producto de funciones', 'f\'·g + f·g\'', 'f(x) = x·sin(x)', 'f\'(x) = sin(x) + x·cos(x)', 'Regla del producto'],
+                    ['Cociente de funciones', '(f\'·g - f·g\')/g²', 'f(x) = x/sin(x)', 'f\'(x) = (sin(x) - x·cos(x))/sin²(x)', 'Regla del cociente'],
+                    ['Composición (Regla de la cadena)', 'f\'(g(x))·g\'(x)', 'f(x) = sin(x²)', 'f\'(x) = cos(x²)·2x', 'Derivada de función compuesta']
+                ];
+                
+                // Ajustar el espaciado vertical
+                y += 10;
+                let rowColor = false;
+                
+                derivatives.forEach((row, index) => {
+                    // Alternar colores de fila
+                    if (rowColor) {
+                        doc.setFillColor(235, 248, 255); // Azul muy claro
+                        doc.rect(10, y - 3, doc.internal.pageSize.width - 20, 8, 'F');
+                    }
+                    rowColor = !rowColor;
+                    
+                    // Asegurar que no escribimos fuera de la página
+                    if (y > doc.internal.pageSize.height - 20) {
+                        doc.addPage('l'); // Nueva página en horizontal
+                        y = 20;
+                        
+                        // Volver a dibujar encabezados
+                        doc.setFontSize(11);
+                        doc.setTextColor(255, 255, 255);
+                        doc.setFillColor(66, 153, 225);
+                        doc.rect(10, y - 5, doc.internal.pageSize.width - 20, 10, 'F');
+                        doc.text('Función', 20, y + 2);
+                        doc.text('Derivada', 70, y + 2);
+                        doc.text('Ejemplo', 120, y + 2);
+                        doc.text('Derivada del Ejemplo', 170, y + 2);
+                        doc.text('Regla/Notas', 230, y + 2);
+                        
+                        doc.setFontSize(10);
+                        doc.setTextColor(0, 0, 0);
+                        y += 10;
+                        rowColor = false;
+                    }
+                    
+                    // Dibujar contenido de la fila
+                    doc.text(row[0], 20, y);
+                    doc.text(row[1], 70, y);
+                    doc.text(row[2], 120, y);
+                    doc.text(row[3], 170, y);
+                    doc.text(row[4], 230, y);
+                    
+                    y += 7;
+                });
+                
+                // Pie de página
+                doc.setFontSize(10);
+                doc.setTextColor(74, 85, 104);
+                doc.text('Generado por Derivadas AI - © ' + new Date().getFullYear() + ' Todos los derechos reservados', 
+                         doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+                
+                // Guardar el PDF
+                doc.save('Tabla_Completa_de_Derivadas.pdf');
+            }
+        });
+        
+        function insertFunction(func, type) {
+            const input = document.getElementById('math-expression');
+            const currentValue = input.value;
+            const cursorPos = input.selectionStart;
+            
+            input.value = currentValue.substring(0, cursorPos) + func + currentValue.substring(cursorPos);
+            input.selectionStart = cursorPos + func.length;
+            input.selectionEnd = cursorPos + func.length;
+            input.focus();
+            
+            showNotification(`Función ${type} insertada`, 'var(--purple)');
+        }
+        
+        function showNotification(message, color) {
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.style.position = 'fixed';
+            notification.style.bottom = '20px';
+            notification.style.right = '20px';
+            notification.style.backgroundColor = color;
+            notification.style.color = 'white';
+            notification.style.padding = '10px 20px';
+            notification.style.borderRadius = '4px';
+            notification.style.zIndex = '1000';
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => document.body.removeChild(notification), 300);
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
